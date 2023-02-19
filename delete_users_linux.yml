@@ -1,0 +1,13 @@
+---
+- name: Delete users with uid greater than 1000
+  hosts: all
+  become: true
+  become_user: root
+  tasks:
+  - name: List users
+    shell: cat /etc/passwd
+    register: passwd_list
+  - name: Delete users
+    shell: userdel -f {{ item.split(':')[0] }}
+    when: item.split(':')[2]|int > 1000
+    with_items: "{{ passwd_list.stdout_lines }}"
