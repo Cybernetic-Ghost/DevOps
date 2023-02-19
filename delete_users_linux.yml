@@ -9,5 +9,5 @@
     register: passwd_list
   - name: Delete users
     shell: userdel -f {{ item.split(':')[0] }}
-    when: item.split(':')[2]|int > 1000
+    when: item.split(':')[2]|int > 999
     with_items: "{{ passwd_list.stdout_lines }}"
