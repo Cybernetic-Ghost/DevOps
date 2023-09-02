@@ -1,0 +1,78 @@
+Apache:   
+     sudo apt update
+     sudo apt-get install -y build-essential python3.10-venv libssl-dev libffi-dev python3-dev python3-pip libsasl2-dev libldap2-dev default-libmysqlclient-dev 
+     pip install --upgrade pip setuptools pip
+     pip install virtualenv 
+     python3 -m venv apache
+     . apache/bin/activate
+     pip install marshmallow-enum
+     pip install apache-superset
+     pip install sqlparse=='0.4.3'
+     pip install psycopg2-binary # Without this packet there will be no change during the PostgeSQL connection 
+     export FLASK_APP=superset
+     openssl rand -base64 42
+     vim apache/lib64/python3.10/site-packages/superset/config.py
+        {
+            SUPERSET_WEBSERVER_PROTOCOL = "http"
+            SUPERSET_WEBSERVER_ADDRESS = "*INSERT YOUR IP*"
+            SUPERSET_WEBSERVER_PORT = 8088
+
+            SECRET_KEY = "*INSERT YOUR KEY*"
+        }
+     superset db upgrade
+     superset fab create-admin
+     superset db upgrade
+     superset load_examples
+     superset init
+     superset run -h *YOUR IP* -p 8088 --with-threads --reload --debugger
+
+PostgreSQL:
+    sudo apt update
+    sudo apt install -y postgresql postgresql-contrib
+    sudo systemctl enable postgresql
+    sudo su - postgres
+        psql 
+            CREATE USER admin WITH PASSWORD '*YOUR PASSWORD*';
+            CREATE DATABASE maindb;
+            GRANT ALL PRIVILEGES ON DATABASE maindb to admin;
+        \q
+    exit
+    cd /etc/postgresql/14/main
+    sudo vim pg_hba.conf
+            {
+            # IPv4 local connections:
+            host    all             all             0.0.0.0/0               md5
+            # IPv6 local connections:
+            host    all             all             ::1/128                 md5
+            }
+
+    sudo vim postgresql.conf
+            {
+                listen_addresses = '*'                  # what IP address(es) to listen on;
+            }
+    sudo systemctl restart postgresql
+    sudo apt install -y curl
+    curl https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo apt-key add
+    sudo sh -c 'echo "deb https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list && apt update'
+    sudo apt install -y pgadmin4
+    sudo /usr/pgadmin4/bin/setup-web.sh
+    sudo ufw allow 'Apache'
+    sudo ufw allow 5432
+    # If use ssh 
+    # sudo ufw allow from *YOUR IP* to any port 22
+    # sudo ufw allow from *YOUR IP* to any port 22 proto tcp
+    sudo ufw enable
+    sudo ufw status 
+            {
+            # should be like
+            Status: active
+
+            To                         Action      From
+            --                         ------      ----
+            Apache                     ALLOW       Anywhere
+            5432                       ALLOW       Anywhere
+            22                         ALLOW       *YOUR IP*
+            22/tcp                     ALLOW       *YOUR IP*
+            Apache (v6)                ALLOW       Anywhere (v6)
+            5432 (v6)                  ALLOW       Anywhere (v6)
+            }
