@@ -1,0 +1,55 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ff-service-alerts
+  namespace: ff-play
+  labels:
+    release: monitoring
+spec:
+  groups:
+  - name: ff-service.rules
+    rules:
+    - alert: FFServiceDown
+      expr: min_over_time(up{namespace="ff-play",job="ff-ff-service"}[2m]) == 0
+      for: 2m
+      labels:
+        severity: critical
+        service: ff-service
+      annotations:
+        summary: "ff-service недоступен"
+        description: "Prometheus не может собрать метрики с ff-service (up=0) минимум 2 минуты."
+
+    - alert: FFServiceHighErrorRate
+      expr: (sum(rate(http_requests_total{namespace="ff-play",job="ff-ff-service",status=~"5.."}[5m])) /
+             sum(rate(http_requests_total{namespace="ff-play",job="ff-ff-service"}[5m]))) > 0.01
+        and sum(rate(http_requests_total{namespace="ff-play",job="ff-ff-service"}[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+        service: ff-service
+      annotations:
+        summary: "Высокая доля 5xx у ff-service"
+        description: "Доля 5xx > 1% в течение 5 минут при трафике > 1 rps."
+
+    - alert: FFServiceHighLatencyP95
+      expr: histogram_quantile(
+              0.95,
+              sum by (le) (rate(http_request_duration_seconds_bucket{namespace="ff-play",job="ff-ff-service"}[5m]))
+            ) > 0.5
+      for: 5m
+      labels:
+        severity: warning
+        service: ff-service
+      annotations:
+        summary: "Высокая задержка (p95) у ff-service"
+        description: "95-й перцентиль времени ответа > 500ms за последние 5 минут."
+
+    - alert: FFServicePodRestarts
+      expr: increase(kube_pod_container_status_restarts_total{namespace="ff-play",pod=~"ff-ff-service-.*",container="ff-service"}[10m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+        service: ff-service
+      annotations:
+        summary: "Перезапуски контейнера ff-service"
+        description: "Количество рестартов контейнера выросло за последние 10 минут."

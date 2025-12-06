@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ff-service
+  namespace: ff-play
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ff-service
+  namespaceSelector:
+    matchNames: ["ff-play"]
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
