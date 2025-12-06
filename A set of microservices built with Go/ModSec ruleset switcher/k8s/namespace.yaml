@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+meta
+  name: security
+  labels:
+    tier: security
+    team: platform

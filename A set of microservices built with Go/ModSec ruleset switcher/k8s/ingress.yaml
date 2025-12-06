@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+meta
+  name: modsec-ingress
+  namespace: security
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: modsec-frontend
+            port:
+              number: 80
+      - path: /modsecurity
+        pathType: Prefix
+        backend:
+          service:
+            name: modsec-controller-svc
+            port:
+              number: 8081
