@@ -1,0 +1,9 @@
+  hosts: all
+  become: yes
+  vars:
+    vault_ansible_production_root_password: 
+  tasks:
+    - name: Reset root password
+      user:
+        name: "*"
+        password: "{{vault_ansible_production_root_password}}"
